@@ -1,0 +1,13 @@
+{
+    "stm32-for-vscode.openOCDPath": false,
+    "cSpell.words": [
+        "BLDO",
+        "GNSS",
+        "imei",
+        "imsi",
+        "mpudata",
+        "NBIOT",
+        "SGNSCMD",
+        "XPOWERS"
+    ]
+}
