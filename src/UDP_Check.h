@@ -4,8 +4,6 @@
 #include <TinyGsmClient.h>
 
 extern TinyGsm modem;
-extern const char UDP_Server[];
-extern const int UDP_Port;
 
 bool UDP_Check()
 {
@@ -19,7 +17,7 @@ bool UDP_Check()
     {
         Serial.println();
         Serial.println("..............................................");
-        Serial.println("Existing UDP connection found...");
+        Serial.println("Existing UDP connection is found...");
         Serial.println("..............................................");
         return true;
     }
@@ -27,7 +25,7 @@ bool UDP_Check()
     {
         Serial.println();
         Serial.println("..............................................");
-        Serial.println("No existing UDP connection found, creating a new one now...");
+        Serial.println("No existing UDP connection is found, creating a new one now...");
         Serial.println("..............................................");
         return false;
     }

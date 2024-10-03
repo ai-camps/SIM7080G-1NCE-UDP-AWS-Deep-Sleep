@@ -25,7 +25,7 @@ void Modem_Start()
             delay(1000);
             digitalWrite(BOARD_MODEM_PWR_PIN, LOW);
             retry = 0;
-            Serial.println("Retry start modem .");
+            Serial.println("Retry to start modem ...");
         }
     }
     Serial.println();

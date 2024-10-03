@@ -2,6 +2,7 @@
     "stm32-for-vscode.openOCDPath": false,
     "cSpell.words": [
         "BLDO",
+        "CASTATE",
         "GNSS",
         "imei",
         "imsi",
@@ -9,5 +10,8 @@
         "NBIOT",
         "SGNSCMD",
         "XPOWERS"
+    ],
+    "cSpell.ignoreWords": [
+        "CACLOSE"
     ]
 }

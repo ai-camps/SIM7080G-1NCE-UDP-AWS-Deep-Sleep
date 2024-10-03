@@ -74,6 +74,12 @@ Adafruit_MPU6050 mpu;
 // Define the MPU6050 data structure
 MPUData mpudata;
 
+// Define the variables to store the MPU6050 initial data
+RTC_DATA_ATTR float init_ax, init_ay, init_az, init_gx, init_gy, init_gz;
+
+// Define the percentage change of the sensor data to initial data, only value change more than 10% will be reported
+#define PERCENT_CHANGE 0.10
+
 // ! Define APN to "iot.1nce.net"
 RTC_DATA_ATTR const char apn[] = "iot.1nce.net";
 
@@ -93,10 +99,10 @@ void setup()
 {
     Serial.begin(115200);
 
-    /* // Start while waiting for Serial monitoring
-        while (!Serial)
-            ;
-        delay(3000); */
+    // Start while waiting for Serial monitoring
+    while (!Serial)
+        ;
+    delay(3000);
 
     Serial.println();
     Serial.println("Start to initialize the device now");
@@ -227,10 +233,17 @@ void setup()
     Serial.println("Reading the MPU6050 initial data when device is online");
     MPU_Read(mpudata);
 
+    init_ax = mpudata.ax;
+    init_ay = mpudata.ay;
+    init_az = mpudata.az;
+    init_gx = mpudata.gx;
+    init_gy = mpudata.gy;
+    init_gz = mpudata.gz;
+
     Serial.println("Step 8 done !");
 
     /***********************************
-     *! step 9 : Generate JSON payload and send packet data to udp.os.1nce.com:4445
+     *! step 9 : Generate JSON payload and send initial data to udp.os.1nce.com:4445
      ***********************************/
 
     Serial.println("............................................................................Step 9");
@@ -246,8 +259,33 @@ void setup()
     // Check if the UDP connection is established
     if (!UDP_Check())
     {
-        // Create UDP connection
-        UDP_Create();
+        // Try creating UDP connection 3 times
+        for (int i = 0; i < 3; i++)
+        {
+            // Create UDP connection
+            if (UDP_Create())
+            {
+                // Successfully created UDP connection, break the loop
+                break;
+            }
+            else
+            {
+                // If it's the last attempt and still failed, reset the modem
+                if (i == 2)
+                {
+                    Serial.println("Failed to establish UDP connection after 3 attempts, restart the MCU...");
+                    ESP.restart(); // Rebooting ESP32 device
+                }
+                else
+                {
+                    // Close UDP connection
+                    modem.sendAT("+CACLOSE=0");
+                    
+                    // Wait for 1 seconds
+                    delay(1000); // 1 seconds delay
+                }
+            }
+        }
     }
 
     // Publish the topic and payload
@@ -288,22 +326,31 @@ void loop()
         // Read the MPU6050 sensor data
         MPU_Read(mpudata);
 
-        // Define the pub_topic
-        String pub_topic = device_id + "/vibration_detected";
-
-        // Generate the pub_payload
-        String pub_payload = Payload_Vibration(mpudata, pub_topic);
-
-        // Check if the UDP connection is established
-        if (!UDP_Check())
+        // Check if the sensor data has changed by more than 10%
+        if (abs(mpudata.ax - init_ax) / abs(init_ax) > PERCENT_CHANGE ||
+            abs(mpudata.ay - init_ay) / abs(init_ay) > PERCENT_CHANGE ||
+            abs(mpudata.az - init_az) / abs(init_az) > PERCENT_CHANGE ||
+            abs(mpudata.gx - init_gx) / abs(init_gx) > PERCENT_CHANGE ||
+            abs(mpudata.gy - init_gy) / abs(init_gy) > PERCENT_CHANGE ||
+            abs(mpudata.gz - init_gz) / abs(init_gz) > PERCENT_CHANGE)
         {
-            UDP_Create();
-        }
+            // Define the pub_topic
+            String pub_topic = device_id + "/vibration_detected";
 
-        // Publish pub_topic and pub_payload to report vibration detected
-        Topic_Publish(pub_topic, pub_payload);
+            // Generate the pub_payload
+            String pub_payload = Payload_Vibration(mpudata, pub_topic);
+
+            // Check if the UDP connection is established
+            if (!UDP_Check())
+            {
+                UDP_Create();
+            }
+
+            // Publish pub_topic and pub_payload to report vibration detected
+            Topic_Publish(pub_topic, pub_payload);
+        }
     }
-} 
+}
 
 /* void loop()
 {
@@ -315,5 +362,5 @@ void loop()
     {
         Serial1.write(Serial.read());
     }
-}  
+}
  */

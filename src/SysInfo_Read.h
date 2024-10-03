@@ -11,8 +11,6 @@ extern String Modem_Info;
 
 extern int csq;
 
-extern const char apn[];
-
 void SysInfo_Read()
 {
 
